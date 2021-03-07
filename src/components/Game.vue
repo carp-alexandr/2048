@@ -1,11 +1,5 @@
 <template>
-  <!-- <div
-    class="game"
-    v-on:dragstart="dragStart($event)"
-    v-on:dragend="[dragEnd($event), getScore()]"
-    draggable="true"
-  > -->
-  <div class="game" v-touch:swipe="startPlay(play)">
+  <div class="game" v-touch:swipe="startPlay(play, getScore)">
     <div class="game__grid">
       <div
         class="game__el"
@@ -56,40 +50,10 @@ export default {
   methods: {
     ...mapMutations(["newGame", "play", "getScore"]),
 
-    // dragStart(event) {
-    //   this.location.startX = event.clientX;
-    //   this.location.startY = event.clientY;
-    //   // Hiding shadow of element on drag - not working
-    //   // event.dataTransfer.setDragImage(null, 0, 0);
-    // },
-    // dragEnd(event) {
-    //   this.location.endX = event.clientX;
-    //   this.location.endY = event.clientY;
-
-    //   let distanceX = this.location.endX - this.location.startX;
-    //   let distanceY = this.location.endY - this.location.startY;
-    //   let direction = (distanceX, distanceY) => {
-    //     if (Math.abs(distanceX) - Math.abs(distanceY) > 20) {
-    //       if (distanceX > 0) {
-    //         return "right";
-    //       } else {
-    //         return "left";
-    //       }
-    //     } else if (Math.abs(distanceX) - Math.abs(distanceY) < -20) {
-    //       if (distanceY > 0) {
-    //         return "bottom";
-    //       } else {
-    //         return "top";
-    //       }
-    //     } else {
-    //       return false;
-    //     }
-    //   };
-    //   this.play(direction(distanceX, distanceY));
-    // },
-    startPlay(play) {
+    startPlay(play, getScore) {
       return function(dir) {
         play(dir);
+        getScore();
       };
     }
   },
