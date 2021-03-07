@@ -1,14 +1,15 @@
 <template>
-  <div
+  <!-- <div
     class="game"
     v-on:dragstart="dragStart($event)"
     v-on:dragend="[dragEnd($event), getScore()]"
     draggable="true"
-  >
-  <!-- <div class="game" v-touch:swipe="this.play()"> -->
+  > -->
+  <div class="game" v-touch:swipe="startPlay(play)">
     <div class="game__grid">
       <div
         class="game__el"
+        :style="setRowLenght"
         :class="colors[item]"
         v-for="item in items"
         :key="item.id"
@@ -17,6 +18,7 @@
       </div>
     </div>
     <div class="game__won" v-if="won">You won!</div>
+    <div class="game__won" v-if="lost">You lost!</div>
   </div>
 </template>
 
@@ -34,58 +36,67 @@ export default {
       32: "thirtytwo",
       64: "sixtyfour",
       128: "onehundredtwentyeight",
-      256: "twohundretfiftysix",
+      256: "twohundretfiftysix"
     },
     location: {
       startX: 0,
       startY: 0,
       endX: 0,
-      endY: 0,
-    },
+      endY: 0
+    }
   }),
   computed: {
-    ...mapState(["rowLenght", "items", "won"]),
+    ...mapState(["rowLenght", "items", "won", "lost"]),
+    setRowLenght() {
+      return {
+        "--rowLenght": this.rowLenght
+      };
+    }
   },
   methods: {
-   
     ...mapMutations(["newGame", "play", "getScore"]),
-    
-    dragStart(event) {
-      this.location.startX = event.clientX;
-      this.location.startY = event.clientY;
-      // Hiding shadow of element on drag - not working
-      // event.dataTransfer.setDragImage(null, 0, 0);
-    },
-    dragEnd(event) {
-      this.location.endX = event.clientX;
-      this.location.endY = event.clientY;
 
-      let distanceX = this.location.endX - this.location.startX;
-      let distanceY = this.location.endY - this.location.startY;
-      let direction = (distanceX, distanceY) => {
-        if (Math.abs(distanceX) - Math.abs(distanceY) > 20) {
-          if (distanceX > 0) {
-            return "right";
-          } else {
-            return "left";
-          }
-        } else if (Math.abs(distanceX) - Math.abs(distanceY) < -20) {
-          if (distanceY > 0) {
-            return "bottom";
-          } else {
-            return "top";
-          }
-        } else {
-          return false;
-        }
+    // dragStart(event) {
+    //   this.location.startX = event.clientX;
+    //   this.location.startY = event.clientY;
+    //   // Hiding shadow of element on drag - not working
+    //   // event.dataTransfer.setDragImage(null, 0, 0);
+    // },
+    // dragEnd(event) {
+    //   this.location.endX = event.clientX;
+    //   this.location.endY = event.clientY;
+
+    //   let distanceX = this.location.endX - this.location.startX;
+    //   let distanceY = this.location.endY - this.location.startY;
+    //   let direction = (distanceX, distanceY) => {
+    //     if (Math.abs(distanceX) - Math.abs(distanceY) > 20) {
+    //       if (distanceX > 0) {
+    //         return "right";
+    //       } else {
+    //         return "left";
+    //       }
+    //     } else if (Math.abs(distanceX) - Math.abs(distanceY) < -20) {
+    //       if (distanceY > 0) {
+    //         return "bottom";
+    //       } else {
+    //         return "top";
+    //       }
+    //     } else {
+    //       return false;
+    //     }
+    //   };
+    //   this.play(direction(distanceX, distanceY));
+    // },
+    startPlay(play) {
+      return function(dir) {
+        play(dir);
       };
-      this.play(direction(distanceX, distanceY));
-    },
+    }
   },
   watch: {},
   created() {
     this.newGame();
-  },
+  }
 };
 </script>
 <style lang="scss" scoped>

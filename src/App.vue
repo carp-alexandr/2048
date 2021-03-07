@@ -16,7 +16,7 @@ export default {
   components: {
     Header,
     Game
-  },
+  }
 };
 </script>
 
@@ -35,9 +35,6 @@ export default {
   --sixtyfour: #f65d3b;
   --onehundredtwentyeight: #edce71;
   --twohundretfiftysix: #edcc63;
-  --twothousands: #eec22e;
-
-  --rowLenght: 4;
 }
 * {
   box-sizing: border-box;

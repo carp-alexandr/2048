@@ -17,11 +17,11 @@ import { mapState, mapMutations } from "vuex";
 export default {
   name: "Header",
   computed: {
-    ...mapState(["mainScore"]),
+    ...mapState(["mainScore", "rowLenght"])
   },
   methods: {
-    ...mapMutations(["newGame"]),
-  },
+    ...mapMutations(["newGame"])
+  }
 };
 </script>
 <style lang="scss" scoped>
@@ -45,7 +45,7 @@ export default {
     cursor: pointer;
 
     &:hover {
-      background-color: var(--darkgrey) ;
+      background-color: var(--darkgrey);
     }
   }
   &__description {

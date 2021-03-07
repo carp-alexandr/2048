@@ -1,3 +1,3 @@
 module.exports = {
-  publicPath: '/2048/'
-}
+  publicPath: "/2048/"
+};

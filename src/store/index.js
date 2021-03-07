@@ -8,20 +8,21 @@ export default new Vuex.Store({
     rowLenght: 4,
     mainScore: 0,
     items: [],
-    won: false
+    won: false,
+    lost: false
   },
   mutations: {
     newGame(state) {
-      let generatedItems = new Array(state.rowLenght * state.rowLenght).fill("");
+      let generatedItems = new Array(state.rowLenght * state.rowLenght).fill(
+        ""
+      );
+      let newItem = () => getRandomNumber(1, 3) * 2;
 
       function getRandomNumber(min, max) {
         return Math.floor(Math.random() * (max - min)) + min;
       }
-
-      let newItem = () => getRandomNumber(1, 3) * 2;
-
       function checkEmptyPlaces() {
-        let randomNumber = getRandomNumber(0, 16);
+        let randomNumber = getRandomNumber(0, Math.pow(state.rowLenght, 2));
 
         if (generatedItems[randomNumber] == "") {
           switch (randomNumber) {
@@ -43,193 +44,174 @@ export default new Vuex.Store({
       state.items = generatedItems;
       state.mainScore = 0;
       state.won = false;
+      state.lost = false;
     },
     play(state, direction) {
-        let itemsCopy = state.items;
+      let itemsCopy = state.items;
 
-        if (!state.won) {
-          switch (direction) {
-            case "top":
-              itemsCopy = applyToTop(calculate);
-              addItem();
-              itemsCopy = applyToTop(move);
-              break;
-            case "right":
-              itemsCopy = applyToRight(calculate);
-              addItem();
-              itemsCopy = applyToRight(move);
-              break;
-            case "bottom":
-              itemsCopy = applyToBottom(calculate);
-              addItem();
-              itemsCopy = applyToBottom(move);
-              break;
-            case "left":
-              itemsCopy = applyToLeft(calculate);
-              addItem();
-              itemsCopy = applyToLeft(move);
-              break;
-            default:
-              break;
-          }
+      if (!state.won && !state.lost) {
+        switch (direction) {
+          case "top":
+            itemsCopy = applyToTop(calculate);
+            addItem();
+            itemsCopy = applyToTop(move);
+            break;
+          case "right":
+            itemsCopy = applyHorizontal(calculate, "right");
+            addItem();
+            itemsCopy = applyHorizontal(move, "right");
+            break;
+          case "bottom":
+            itemsCopy = applyToBottom(calculate);
+            addItem();
+            itemsCopy = applyToBottom(move);
+            break;
+          case "left":
+            itemsCopy = applyHorizontal(calculate, "left");
+            addItem();
+            itemsCopy = applyHorizontal(move, "left");
+            break;
+          default:
+            break;
         }
-        function move(arr) {
-          let pushed = 0;
-          arr.forEach((value, index, arr) => {
-            if (value !== "") {
-              pushed++;
-              arr[index] = "";
-              arr.push(value);
+      }
+      function move(arr) {
+        let pushed = 0;
+        arr.forEach((value, index, arr) => {
+          if (value !== "") {
+            pushed++;
+            arr[index] = "";
+            arr.push(value);
+          }
+        });
+        arr.splice(0, pushed);
+        return pushed;
+      }
+      function calculate(arr) {
+        let pushed = move(arr);
+
+        if (pushed > 1) {
+          let comparedValue = null;
+          let moveIndexes = [];
+          arr.reverse().forEach((val, index, array) => {
+            if (val === comparedValue) {
+              array[index - 1] = val * 2;
+              moveIndexes.push(index);
+              comparedValue = null;
+            } else if (val !== "") {
+              comparedValue = val;
             }
           });
-          arr.splice(0, pushed);
-        }
-        function calculate(arr) {
-          let pushed = 0;
-          arr.forEach((value, index, arr) => {
-            if (value !== "") {
-              pushed++;
-              arr[index] = "";
-              arr.push(value);
-            }
+          moveIndexes.forEach(val => {
+            arr.splice(val, 1);
+            arr.push("");
           });
-          arr.splice(0, pushed);
+          arr.reverse();
+        }
+      }
+      function flattenVertical(arr) {
+        let flatArray = [];
+        let flatArrayIndex = 0;
+        for (let i = 0; i < state.rowLenght; i++) {
+          for (let row = 0; row < state.rowLenght; row++) {
+            flatArray[flatArrayIndex] = arr[row][i];
+            flatArrayIndex++;
+          }
+        }
+        return flatArray;
+      }
+      function applyToTop(operation) {
+        let nestedArray = Array.apply(null, {
+          length: state.rowLenght
+        }).map(() => []);
+        for (let row = 0; row < state.rowLenght; row++) {
+          let subArrIndex = 0;
+          for (
+            let i = row;
+            i < Math.pow(state.rowLenght, 2);
+            i += state.rowLenght
+          ) {
+            nestedArray[row][subArrIndex] = itemsCopy[i];
+            subArrIndex++;
+          }
+          operation(nestedArray[row].reverse());
+        }
 
-          if (pushed > 1) {
-            if (arr[3] === arr[2] && arr[3] !== "") {
-              arr[3] = arr[3] * 2;
-              arr[2] = "";
-              if (arr[1] === arr[0] && arr[1] !== "") {
-                arr[1] = arr[1] * 2;
-                arr[2] = arr[1];
-                arr[1] = "";
-                arr[0] = "";
-              } else {
-                arr[2] = arr[1];
-                arr[1] = arr[2];
-              }
-            } else if (arr[3] !== arr[2] && arr[2] === arr[1] && arr[2] !== "") {
-              arr[2] = arr[2] * 2;
-              arr[1] = "";
-            } else if (
-              arr[3] !== arr[2] &&
-              arr[2] !== arr[1] &&
-              arr[1] === arr[0] &&
-              arr[1] !== ""
-            ) {
-              arr[1] = arr[1] * 2;
-              arr[0] = "";
-            }
+        return flattenVertical(nestedArray).reverse();
+      }
+      function applyToBottom(operation) {
+        let nestedArray = Array.apply(null, {
+          length: state.rowLenght
+        }).map(() => []);
+        for (let row = 0; row < state.rowLenght; row++) {
+          let subArrIndex = 0;
+          for (
+            let i = row;
+            i < Math.pow(state.rowLenght, 2);
+            i += state.rowLenght
+          ) {
+            nestedArray[row][subArrIndex] = itemsCopy[i];
+            subArrIndex++;
           }
+          operation(nestedArray[row]);
         }
-        function flattenVertical(arr) {
-          let flatArray = [];
-          let flatArrayIndex = 0;
-          for (let i = 0; i < 4; i++) {
-            for (let row = 0; row < 4; row++) {
-              flatArray[flatArrayIndex] = arr[row][i];
-              flatArrayIndex++;
-            }
-          }
-          return flatArray;
-        }
-        function applyToTop(operation) {
-          let nestedArray = [[], [], [], []];
-          for (let row = 0; row < 4; row++) {
-            let subArrIndex = 0;
-            for (let i = row; i < 16; i += 4) {
-              nestedArray[row][subArrIndex] = itemsCopy[i];
-              subArrIndex++;
-            }
-            operation(nestedArray[row].reverse());
-          }
 
-          return flattenVertical(nestedArray).reverse();
-        }
-        function applyToRight(operation) {
-          let nestedArray = new Array(4).fill([]);
-          let inRow = 4;
-          for (var i = 0; i < 4; i++) {
-            nestedArray[i] = itemsCopy.slice(inRow - 4, inRow);
-            inRow += 4;
-            operation(nestedArray[i]);
-          }
-          let flatArray = [
-            ...nestedArray[0],
-            ...nestedArray[1],
-            ...nestedArray[2],
-            ...nestedArray[3]
-          ];
-          return flatArray;
-        }
-        function applyToBottom(operation) {
-          let nestedArray = [[], [], [], []];
-          for (let row = 0; row < 4; row++) {
-            let subArrIndex = 0;
-            for (let i = row; i < 16; i += 4) {
-              nestedArray[row][subArrIndex] = itemsCopy[i];
-              subArrIndex++;
-            }
-            operation(nestedArray[row]);
-          }
+        return flattenVertical(nestedArray);
+      }
+      function applyHorizontal(operation, dir) {
+        let nestedArray = new Array(state.rowLenght).fill([]);
+        let inRow = state.rowLenght;
+        for (var i = 0; i < state.rowLenght; i++) {
+          nestedArray[i] = itemsCopy.slice(inRow - state.rowLenght, inRow);
+          inRow += state.rowLenght;
 
-          return flattenVertical(nestedArray);
-        }
-        function applyToLeft(operation) {
-          let nestedArray = new Array(4).fill([]);
-          let inRow = 4;
-          for (var i = 0; i < 4; i++) {
-            nestedArray[i] = itemsCopy.slice(inRow - 4, inRow);
-            inRow += 4;
+          if (dir === "left") {
             operation(nestedArray[i].reverse());
+            nestedArray[i].reverse();
+          } else if (dir === "right") {
+            operation(nestedArray[i]);
+            nestedArray[i];
           }
-          let flatArray = [
-            ...nestedArray[0].reverse(),
-            ...nestedArray[1].reverse(),
-            ...nestedArray[2].reverse(),
-            ...nestedArray[3].reverse()
-          ];
-          return flatArray;
         }
-        function addItem() {
-          function getRandomNumber(min, max) {
-            return Math.floor(Math.random() * (max - min)) + min;
-          }
+        return nestedArray.flat();
+      }
+      function addItem() {
+        let newItem = () => getRandomNumber(1, 3) * 2;
 
-          let newItem = () => getRandomNumber(1, 3) * 2;
+        function getRandomNumber(min, max) {
+          return Math.floor(Math.random() * (max - min)) + min;
+        }
+        function checkEmptyPlaces() {
+          let randomNumber = getRandomNumber(0, Math.pow(state.rowLenght, 2));
 
-          function checkEmptyPlaces() {
-            let randomNumber = getRandomNumber(0, 16);
-
-            // check if game is not ended
-            if (itemsCopy.includes("")) {
-              if (itemsCopy[randomNumber] === "") {
-                switch (randomNumber) {
-                  case 5:
-                  case 6:
-                    return checkEmptyPlaces();
-                  case 9:
-                  case 10:
-                    return checkEmptyPlaces();
-                  default:
-                    return randomNumber;
-                }
-              } else {
+          if (itemsCopy[randomNumber] === "") {
+            switch (randomNumber) {
+              case 5:
+              case 6:
                 return checkEmptyPlaces();
-              }
-            } else {
-              state.won = 'true';
+              case 9:
+              case 10:
+                return checkEmptyPlaces();
+              default:
+                return randomNumber;
             }
+          } else {
+            return checkEmptyPlaces();
           }
-          itemsCopy[checkEmptyPlaces()] = newItem();
         }
+        if (itemsCopy.includes("")) {
+          itemsCopy[checkEmptyPlaces()] = newItem();
+        } else {
+          state.lost = "true";
+        }
+      }
 
-        state.items = itemsCopy;
+      state.items = itemsCopy;
     },
     getScore(state) {
       state.mainScore = Math.max(...state.items);
       if (state.mainScore === 64) {
-        state.won = 'true';
+        state.won = "true";
       }
     }
   },
