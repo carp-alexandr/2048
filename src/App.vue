@@ -22,6 +22,7 @@ export default {
 
 <style lang="scss">
 :root {
+  // Colors
   --bg: #fbf8f1;
   --grey: #bbada0;
   --empty: #cdc1b5;
@@ -52,6 +53,7 @@ h1 {
 }
 .wrapper {
   height: 100vh;
+  // Size based on height of a screen to always fit the game
   max-width: calc(90vh - 160px);
   margin: 0 auto;
   display: flex;

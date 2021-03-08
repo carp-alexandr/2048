@@ -11,17 +11,18 @@
         {{ item }}
       </div>
     </div>
-    <div class="game__won" v-if="won">You won!</div>
-    <div class="game__won" v-if="lost">You lost!</div>
+    <div class="game__over" v-if="won">You won!</div>
+    <div class="game__over" v-if="lost">You lost!</div>
   </div>
 </template>
 
 <script>
-import { mapState, mapMutations } from "vuex";
+import { mapState, mapActions } from "vuex";
 
 export default {
   name: "Game",
   data: () => ({
+    // Colours based on the number in .game__el
     colors: {
       2: "two",
       4: "four",
@@ -41,6 +42,7 @@ export default {
   }),
   computed: {
     ...mapState(["rowLenght", "items", "won", "lost"]),
+    // Changes styles from vue variables
     setRowLenght() {
       return {
         "--rowLenght": this.rowLenght
@@ -48,8 +50,11 @@ export default {
     }
   },
   methods: {
-    ...mapMutations(["newGame", "play", "getScore"]),
-
+    ...mapActions(["newGame", "play", "getScore"]),
+    // Using the plugin
+    // https://www.npmjs.com/package/vue2-touch-events
+    // Adding parameter like
+    // https://github.com/jerrybendy/vue-touch-events/issues/3
     startPlay(play, getScore) {
       return function(dir) {
         play(dir);
@@ -70,9 +75,12 @@ export default {
   height: 0;
   background-color: var(--grey);
   border-radius: 10px;
+  // The game is always square
   padding-top: 100%;
   font-size: 38px;
+  cursor: move;
   @media screen and (max-width: 768px) {
+    // Text responsivly fits the screen
     font-size: 5vw;
   }
   &__grid {
@@ -86,7 +94,9 @@ export default {
     padding: 2%;
   }
   &__el {
+    // Applying vue variables to css
     flex-basis: calc(100% / var(--rowLenght) - 4%);
+    max-width: calc(100% / var(--rowLenght) - 4%);
     margin: 2%;
     background-color: var(--empty);
     border-radius: 5px;
@@ -95,12 +105,11 @@ export default {
     justify-content: center;
     align-items: center;
     font-weight: 600;
-    cursor: move;
     -moz-user-select: none;
     -khtml-user-select: none;
     -webkit-user-select: none;
   }
-  &__won {
+  &__over {
     position: absolute;
     background-color: rgba(black, 0.6);
     left: 0;
@@ -112,9 +121,10 @@ export default {
     align-items: center;
     font-size: 4rem;
     color: white;
+    cursor: auto;
   }
 }
-
+// Colors for items(need to add more)
 .two {
   background-color: var(--two);
 }

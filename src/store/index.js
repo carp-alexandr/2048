@@ -5,29 +5,46 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
+    // Defines size of the game field
     rowLenght: 4,
     mainScore: 0,
+    // Primary array with all items flat
     items: [],
     won: false,
-    lost: false
+    lost: false,
+
+    // Generates "2" for "randomCoefficient" percent of time and "4" for 10-"randomCoefficient" percent of time
+    randomCoefficient: 7
   },
   mutations: {
-    newGame(state) {
-      let generatedItems = new Array(state.rowLenght * state.rowLenght).fill(
+    newGameMutation(state) {
+      // Generates new array of "rowLenght square" size
+      const GENERATEDITEMS = new Array(Math.pow(state.rowLenght, 2)).fill(
         ""
       );
-      let newItem = () => getRandomNumber(1, 3) * 2;
-
+      // Function used to generate random stuff
       function getRandomNumber(min, max) {
         return Math.floor(Math.random() * (max - min)) + min;
       }
+      // Returns random new item for game
+      let newItem = function () {
+        if (getRandomNumber(1, 10) > state.randomCoefficient) {
+          return 4;
+        } else {
+          return 2;
+        }
+      }
+
       function checkEmptyPlaces() {
+        // Generates random place "rowLenght square" where new number will appear
         let randomNumber = getRandomNumber(0, Math.pow(state.rowLenght, 2));
 
-        if (generatedItems[randomNumber] == "") {
+        // Cheking if generated place is empty
+        if (GENERATEDITEMS[randomNumber] === "") {
           switch (randomNumber) {
             case 5:
             case 6:
+              // Starts again if the place is unacceptable to appear
               return checkEmptyPlaces();
             case 9:
             case 10:
@@ -36,35 +53,41 @@ export default new Vuex.Store({
               return randomNumber;
           }
         } else {
+          // Starts again if the place is busy
           return checkEmptyPlaces();
         }
       }
-      generatedItems[checkEmptyPlaces()] = newItem();
-      generatedItems[checkEmptyPlaces()] = newItem();
-      state.items = generatedItems;
+      // Insert new items in places
+      GENERATEDITEMS[checkEmptyPlaces()] = newItem();
+      GENERATEDITEMS[checkEmptyPlaces()] = newItem();
+      // Writing it in a primary array
+      state.items = GENERATEDITEMS;
+      // Reseting the variables if there was a game before
       state.mainScore = 0;
       state.won = false;
       state.lost = false;
     },
-    play(state, direction) {
+    playMutation(state, direction) {
+      // Using copy of a primary array
       let itemsCopy = state.items;
-
+      // Freezing game if it ended
       if (!state.won && !state.lost) {
+        // Getting swipe direction and applying coresponding functions
         switch (direction) {
           case "top":
-            itemsCopy = applyToTop(calculate);
+            itemsCopy = applyVertical(calculate, "top");
             addItem();
-            itemsCopy = applyToTop(move);
+            itemsCopy = applyVertical(move, "top");
+            break;
+          case "bottom":
+            itemsCopy = applyVertical(calculate, "bottom");
+            addItem();
+            itemsCopy = applyVertical(move, "bottom");
             break;
           case "right":
             itemsCopy = applyHorizontal(calculate, "right");
             addItem();
             itemsCopy = applyHorizontal(move, "right");
-            break;
-          case "bottom":
-            itemsCopy = applyToBottom(calculate);
-            addItem();
-            itemsCopy = applyToBottom(move);
             break;
           case "left":
             itemsCopy = applyHorizontal(calculate, "left");
@@ -75,6 +98,7 @@ export default new Vuex.Store({
             break;
         }
       }
+      // moves the nested array items to end
       function move(arr) {
         let pushed = 0;
         arr.forEach((value, index, arr) => {
@@ -85,30 +109,41 @@ export default new Vuex.Store({
           }
         });
         arr.splice(0, pushed);
+        // returns the ammount of filled array items
         return pushed;
       }
+      // Adding values of equal siblings
       function calculate(arr) {
+        // Applying move and saving the amount of the filled items in the nested array
         let pushed = move(arr);
-
+        // if there are enough items to make operations
         if (pushed > 1) {
           let comparedValue = null;
           let moveIndexes = [];
+          // reverse array because of function move direction(can be fixed)
           arr.reverse().forEach((val, index, array) => {
+            // Success for making operation
             if (val === comparedValue) {
               array[index - 1] = val * 2;
+              // Saving the place of removed value
               moveIndexes.push(index);
               comparedValue = null;
+            // No operation, preparing for next itteration
             } else if (val !== "") {
+              // Saving the value to use as previous
               comparedValue = val;
             }
           });
+          // Moving the items to the right positions after operation
           moveIndexes.forEach(val => {
             arr.splice(val, 1);
             arr.push("");
           });
+          // reversing the array back
           arr.reverse();
         }
       }
+      // Function to flatten the array after "top" or "bottom" swipe
       function flattenVertical(arr) {
         let flatArray = [];
         let flatArrayIndex = 0;
@@ -120,10 +155,14 @@ export default new Vuex.Store({
         }
         return flatArray;
       }
-      function applyToTop(operation) {
+      // Function to work with swipe "top" and "bottom"
+      function applyVertical(operation, dir) {
+        // Creating empty array with arrays
         let nestedArray = Array.apply(null, {
           length: state.rowLenght
         }).map(() => []);
+
+        // Vertically slicing primary array in array with "rowLenght" arrays 
         for (let row = 0; row < state.rowLenght; row++) {
           let subArrIndex = 0;
           for (
@@ -134,54 +173,59 @@ export default new Vuex.Store({
             nestedArray[row][subArrIndex] = itemsCopy[i];
             subArrIndex++;
           }
-          operation(nestedArray[row].reverse());
-        }
-
-        return flattenVertical(nestedArray).reverse();
-      }
-      function applyToBottom(operation) {
-        let nestedArray = Array.apply(null, {
-          length: state.rowLenght
-        }).map(() => []);
-        for (let row = 0; row < state.rowLenght; row++) {
-          let subArrIndex = 0;
-          for (
-            let i = row;
-            i < Math.pow(state.rowLenght, 2);
-            i += state.rowLenght
-          ) {
-            nestedArray[row][subArrIndex] = itemsCopy[i];
-            subArrIndex++;
+          // Applying functions: "move" or "calculate"
+          if (dir === "bottom") {
+            operation(nestedArray[row]);
+          } else if (dir === "top") {
+            operation(nestedArray[row].reverse());
           }
-          operation(nestedArray[row]);
         }
-
-        return flattenVertical(nestedArray);
+        // Returning flat array
+        if (dir === "bottom") {
+          return flattenVertical(nestedArray);
+        } else if (dir === "top") {
+          return flattenVertical(nestedArray).reverse();
+        }
       }
+      // Function to work with swipe "left" and "right"
       function applyHorizontal(operation, dir) {
-        let nestedArray = new Array(state.rowLenght).fill([]);
-        let inRow = state.rowLenght;
-        for (var i = 0; i < state.rowLenght; i++) {
-          nestedArray[i] = itemsCopy.slice(inRow - state.rowLenght, inRow);
-          inRow += state.rowLenght;
-
+        // Creating empty array with arrays
+        let nestedArray = Array.apply(null, {
+          length: state.rowLenght
+        }).map(() => []);
+        
+        let slicePoint = state.rowLenght;
+        // Slicing the copied array horizontaly in "rowLenght" arrays
+        for (let i = 0; i < state.rowLenght; i++) {
+          nestedArray[i] = itemsCopy.slice(slicePoint - state.rowLenght, slicePoint);
+          slicePoint += state.rowLenght;
+          // Applying functions: "move" or "calculate"
           if (dir === "left") {
             operation(nestedArray[i].reverse());
             nestedArray[i].reverse();
           } else if (dir === "right") {
             operation(nestedArray[i]);
-            nestedArray[i];
           }
         }
+        // Returning flat array
         return nestedArray.flat();
       }
+      // Adding a new item
       function addItem() {
-        let newItem = () => getRandomNumber(1, 3) * 2;
-
+        // Returns random new item for game
+        let newItem = function () {
+          if (getRandomNumber(1, 10) > state.randomCoefficient) {
+            return 4;
+          } else {
+            return 2;
+          }
+        }
+        // Function used to generate random stuff
         function getRandomNumber(min, max) {
           return Math.floor(Math.random() * (max - min)) + min;
         }
         function checkEmptyPlaces() {
+          // Generates random place "rowLenght square" where new number will appear
           let randomNumber = getRandomNumber(0, Math.pow(state.rowLenght, 2));
 
           if (itemsCopy[randomNumber] === "") {
@@ -199,22 +243,35 @@ export default new Vuex.Store({
             return checkEmptyPlaces();
           }
         }
+        // Adding new item if there is place for it
         if (itemsCopy.includes("")) {
           itemsCopy[checkEmptyPlaces()] = newItem();
         } else {
           state.lost = "true";
         }
       }
-
+      // Rewriting the primary array 
       state.items = itemsCopy;
     },
-    getScore(state) {
+    getScoreMutation(state) {
+      // Calculating the score
       state.mainScore = Math.max(...state.items);
+      // Setting the winning case
       if (state.mainScore === 64) {
         state.won = "true";
       }
     }
   },
-  actions: {},
+  actions: {
+    newGame(context) {
+      context.commit('newGameMutation')
+    },
+    play(context, dir) {
+      context.commit('playMutation', dir)
+    },
+    getScore(context) {
+      context.commit('getScoreMutation')
+    }
+  },
   modules: {}
 });

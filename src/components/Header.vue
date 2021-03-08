@@ -12,15 +12,15 @@
   </div>
 </template>
 <script>
-import { mapState, mapMutations } from "vuex";
+import { mapState, mapActions } from "vuex";
 
 export default {
   name: "Header",
   computed: {
-    ...mapState(["mainScore", "rowLenght"])
+    ...mapState(["mainScore"])
   },
   methods: {
-    ...mapMutations(["newGame"])
+    ...mapActions(["newGame"])
   }
 };
 </script>
