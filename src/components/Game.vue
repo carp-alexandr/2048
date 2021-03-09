@@ -17,7 +17,7 @@
 </template>
 
 <script>
-import { mapState, mapActions } from "vuex";
+import { mapState, mapActions, mapMutations } from "vuex";
 
 export default {
   name: "Game",
@@ -51,6 +51,7 @@ export default {
   },
   methods: {
     ...mapActions(["newGame", "play", "getScore"]),
+    ...mapMutations(["getScore"]),
     // Using the plugin
     // https://www.npmjs.com/package/vue2-touch-events
     // Adding parameter like

@@ -10,6 +10,7 @@ export default new Vuex.Store({
     mainScore: 0,
     // Primary array with all items flat
     items: [],
+    itemsCopy: [],
     won: false,
     lost: false,
 
@@ -19,7 +20,7 @@ export default new Vuex.Store({
   mutations: {
     newGameMutation(state) {
       // Generates new array of "rowLenght square" size
-      const GENERATEDITEMS = new Array(Math.pow(state.rowLenght, 2)).fill(
+      state.itemsCopy = new Array(Math.pow(state.rowLenght, 2)).fill(
         ""
       );
       // Function used to generate random stuff
@@ -40,28 +41,18 @@ export default new Vuex.Store({
         let randomNumber = getRandomNumber(0, Math.pow(state.rowLenght, 2));
 
         // Cheking if generated place is empty
-        if (GENERATEDITEMS[randomNumber] === "") {
-          switch (randomNumber) {
-            case 5:
-            case 6:
-              // Starts again if the place is unacceptable to appear
-              return checkEmptyPlaces();
-            case 9:
-            case 10:
-              return checkEmptyPlaces();
-            default:
-              return randomNumber;
-          }
+        if (state.itemsCopy[randomNumber] === "") {
+          return randomNumber;
         } else {
           // Starts again if the place is busy
           return checkEmptyPlaces();
         }
       }
       // Insert new items in places
-      GENERATEDITEMS[checkEmptyPlaces()] = newItem();
-      GENERATEDITEMS[checkEmptyPlaces()] = newItem();
+      state.itemsCopy[checkEmptyPlaces()] = newItem();
+      state.itemsCopy[checkEmptyPlaces()] = newItem();
       // Writing it in a primary array
-      state.items = GENERATEDITEMS;
+      state.items = state.itemsCopy;
       // Reseting the variables if there was a game before
       state.mainScore = 0;
       state.won = false;
@@ -69,30 +60,30 @@ export default new Vuex.Store({
     },
     playMutation(state, direction) {
       // Using copy of a primary array
-      let itemsCopy = state.items;
+      state.itemsCopy = state.items;
       // Freezing game if it ended
       if (!state.won && !state.lost) {
         // Getting swipe direction and applying coresponding functions
         switch (direction) {
           case "top":
-            itemsCopy = applyVertical(calculate, "top");
+            state.itemsCopy = applyVertical(calculate, "top");
             addItem();
-            itemsCopy = applyVertical(move, "top");
+            state.itemsCopy = applyVertical(move, "top");
             break;
           case "bottom":
-            itemsCopy = applyVertical(calculate, "bottom");
+            state.itemsCopy = applyVertical(calculate, "bottom");
             addItem();
-            itemsCopy = applyVertical(move, "bottom");
+            state.itemsCopy = applyVertical(move, "bottom");
             break;
           case "right":
-            itemsCopy = applyHorizontal(calculate, "right");
+            state.itemsCopy = applyHorizontal(calculate, "right");
             addItem();
-            itemsCopy = applyHorizontal(move, "right");
+            state.itemsCopy = applyHorizontal(move, "right");
             break;
           case "left":
-            itemsCopy = applyHorizontal(calculate, "left");
+            state.itemsCopy = applyHorizontal(calculate, "left");
             addItem();
-            itemsCopy = applyHorizontal(move, "left");
+            state.itemsCopy = applyHorizontal(move, "left");
             break;
           default:
             break;
@@ -128,7 +119,7 @@ export default new Vuex.Store({
               // Saving the place of removed value
               moveIndexes.push(index);
               comparedValue = null;
-            // No operation, preparing for next itteration
+              // No operation, preparing for next itteration
             } else if (val !== "") {
               // Saving the value to use as previous
               comparedValue = val;
@@ -170,7 +161,7 @@ export default new Vuex.Store({
             i < Math.pow(state.rowLenght, 2);
             i += state.rowLenght
           ) {
-            nestedArray[row][subArrIndex] = itemsCopy[i];
+            nestedArray[row][subArrIndex] = state.itemsCopy[i];
             subArrIndex++;
           }
           // Applying functions: "move" or "calculate"
@@ -193,11 +184,11 @@ export default new Vuex.Store({
         let nestedArray = Array.apply(null, {
           length: state.rowLenght
         }).map(() => []);
-        
+
         let slicePoint = state.rowLenght;
         // Slicing the copied array horizontaly in "rowLenght" arrays
         for (let i = 0; i < state.rowLenght; i++) {
-          nestedArray[i] = itemsCopy.slice(slicePoint - state.rowLenght, slicePoint);
+          nestedArray[i] = state.itemsCopy.slice(slicePoint - state.rowLenght, slicePoint);
           slicePoint += state.rowLenght;
           // Applying functions: "move" or "calculate"
           if (dir === "left") {
@@ -228,7 +219,7 @@ export default new Vuex.Store({
           // Generates random place "rowLenght square" where new number will appear
           let randomNumber = getRandomNumber(0, Math.pow(state.rowLenght, 2));
 
-          if (itemsCopy[randomNumber] === "") {
+          if (state.itemsCopy[randomNumber] === "") {
             switch (randomNumber) {
               case 5:
               case 6:
@@ -244,16 +235,16 @@ export default new Vuex.Store({
           }
         }
         // Adding new item if there is place for it
-        if (itemsCopy.includes("")) {
-          itemsCopy[checkEmptyPlaces()] = newItem();
+        if (state.itemsCopy.includes("")) {
+          state.itemsCopy[checkEmptyPlaces()] = newItem();
         } else {
           state.lost = "true";
         }
       }
       // Rewriting the primary array 
-      state.items = itemsCopy;
+      state.items = state.itemsCopy;
     },
-    getScoreMutation(state) {
+    getScore(state) {
       // Calculating the score
       state.mainScore = Math.max(...state.items);
       // Setting the winning case
@@ -268,9 +259,6 @@ export default new Vuex.Store({
     },
     play(context, dir) {
       context.commit('playMutation', dir)
-    },
-    getScore(context) {
-      context.commit('getScoreMutation')
     }
   },
   modules: {}
